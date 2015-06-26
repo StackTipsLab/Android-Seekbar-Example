@@ -8,9 +8,9 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import com.daimajia.easing.BaseEasingMethod;
 import com.daimajia.easing.Glider;
 import com.daimajia.easing.Skill;
-import com.daimajia.easing.bounce.BounceEaseInOut;
 import com.nineoldandroids.animation.AnimatorSet;
 
 public class SeekBarActivity extends Activity {
@@ -23,6 +23,9 @@ public class SeekBarActivity extends Activity {
     private static final int SNAP_MIN = 0;
     private static final int SNAP_MIDDLE = 50;
     private static final int SNAP_MAX = 100;
+
+    private static final int LOWER_HALF = (SNAP_MIN + SNAP_MIDDLE) / 2;
+    private static final int UPPER_HALF = (SNAP_MIDDLE + SNAP_MAX) / 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,26 +74,28 @@ public class SeekBarActivity extends Activity {
             @Override
             public void onStopTrackingTouch(final SeekBar seekBar) {
 
+                final int duration = 750;
                 int progress = seekBar.getProgress();
-                if (progress >= SNAP_MIN && progress <= 25)
-                    setProgressAnimated(seekBar, progress, SNAP_MIN);
-                if (progress > 25 && progress <= 75)
-                    setProgressAnimated(seekBar, progress, SNAP_MIDDLE);
-                if (progress > 75 && progress <= SNAP_MAX)
-                    setProgressAnimated(seekBar, progress, SNAP_MAX);
+                if (progress >= SNAP_MIN && progress <= LOWER_HALF)
+                    setProgressAnimated(seekBar, progress, SNAP_MIN, Skill.ElasticEaseOut, duration);
+                if (progress > LOWER_HALF && progress <= UPPER_HALF)
+                    setProgressAnimated(seekBar, progress, SNAP_MIDDLE, Skill.ElasticEaseOut, duration);
+                if (progress > UPPER_HALF && progress <= SNAP_MAX) {
+                    setProgressAnimated(seekBar, progress, SNAP_MAX, Skill.ElasticEaseOut, duration);
+                }
             }
         });
     }
 
-    private static void setProgressAnimated(final SeekBar seekBar, int from, int to) {
-        AnimatorSet set = new AnimatorSet();
-        set.playTogether(Glider.glide(Skill.QuadEaseOut, 150, com.nineoldandroids.animation.ValueAnimator.ofInt().ofFloat(from, to), new BounceEaseInOut.EasingListener() {
+    private static void setProgressAnimated(final SeekBar seekBar, int from, int to, Skill skill, final int duration) {
+        final AnimatorSet set = new AnimatorSet();
+        set.playTogether(Glider.glide(skill, duration, com.nineoldandroids.animation.ValueAnimator.ofInt().ofFloat(from, to), new BaseEasingMethod.EasingListener() {
             @Override
             public void on(float t, float result, float v2, float v3, float v4) {
                 seekBar.setProgress((int) result);
             }
         }));
-        set.setDuration(150);
+        set.setDuration(duration);
         set.start();
     }
 
